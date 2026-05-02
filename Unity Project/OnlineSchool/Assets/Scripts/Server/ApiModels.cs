@@ -35,3 +35,9 @@ public class RoomsList
 {
     public Room[] rooms;
 }
+
+[System.Serializable]
+public class CreateRoomRequest
+{
+    public string name;
+}

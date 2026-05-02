@@ -1,6 +1,7 @@
-using UnityEngine;
-using UnityEngine.UI;
 using TMPro;
+using UnityEngine;
+using UnityEngine.SceneManagement;
+using UnityEngine.UI;
 
 public class AuthManager : MonoBehaviour
 {
@@ -29,14 +30,27 @@ public class AuthManager : MonoBehaviour
     public Transform roomsContainer;
     public GameObject roomButtonPrefab;
 
+    // Кнопка создания
+    public Button createRoomButton;
+
+    // Панель создания комнаты
+    public GameObject createRoomPanel;
+    public TMP_InputField newRoomNameInput;
+    public Button confirmCreateRoomButton;
+    public Button cancelCreateRoomButton;
+
     void Start()
     {
         loginButton.onClick.AddListener(OnLoginClick);
         registerButton.onClick.AddListener(OnRegisterClick);
         toLoginButton.onClick.AddListener(ShowLoginPanel);
+        createRoomButton.onClick.AddListener(() => createRoomPanel.SetActive(true));
+        confirmCreateRoomButton.onClick.AddListener(OnConfirmCreateRoom);
+        cancelCreateRoomButton.onClick.AddListener(() => createRoomPanel.SetActive(false));
         registerPanel.SetActive(true);
         loginPanel.SetActive(false);
         roomsPanel.SetActive(false);
+        createRoomPanel.SetActive(false);
     }
 
     void OnLoginClick()
@@ -168,5 +182,50 @@ public class AuthManager : MonoBehaviour
     public void JoinRoom(string roomId)
     {
         Debug.Log($"Присоединяюсь к комнате {roomId}");
+
+        // Сохраняем ID комнаты и токен для следующей сцены
+        PlayerPrefs.SetString("SelectedRoomId", roomId);
+        PlayerPrefs.SetString("AccessToken", api.GetToken());
+        PlayerPrefs.Save();
+
+        // Загружаем сцену с классом
+        SceneManager.LoadScene("Classroom");
+    }
+
+    void OnConfirmCreateRoom()
+    {
+        string roomName = newRoomNameInput.text.Trim();
+
+        if (string.IsNullOrEmpty(roomName))
+        {
+            Debug.LogError("Введите название комнаты!");
+            return;
+        }
+
+        CreateRoom(roomName);
+    }
+
+    void CreateRoom(string roomName)
+    {
+        var request = new CreateRoomRequest { name = roomName };
+
+        StartCoroutine(api.Post("/rooms", request, (success, response) =>
+        {
+            if (success)
+            {
+                Debug.Log($"Комната '{roomName}' создана!");
+
+                // Закрываем панель
+                createRoomPanel.SetActive(false);
+                newRoomNameInput.text = "";
+
+                // Обновляем список комнат
+                GetRooms();
+            }
+            else
+            {
+                Debug.LogError($"Ошибка создания комнаты: {response}");
+            }
+        }));
     }
 }

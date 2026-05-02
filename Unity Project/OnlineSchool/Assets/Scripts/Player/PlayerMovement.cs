@@ -4,6 +4,7 @@ public class PlayerMovement : MonoBehaviour
 {
     public float speed = 5f;
     public float lookSpeed = 2f;
+    private Animator animator;
 
     private float rotationX = 0f;
     // Start is called once before the first execution of Update after the MonoBehaviour is created
@@ -11,6 +12,7 @@ public class PlayerMovement : MonoBehaviour
     {
         Cursor.lockState = CursorLockMode.Locked;
         Cursor.visible = false;
+        animator = GetComponent<Animator>();
     }
 
     // Update is called once per frame
@@ -31,6 +33,18 @@ public class PlayerMovement : MonoBehaviour
 
             Camera.main.transform.localRotation = Quaternion.Euler(rotationX, 0f, 0f);
             transform.Rotate(Vector3.up * mouseX);
+
+        }
+
+        if (Mathf.Abs(moveZ) > 0.1f)
+            animator.SetFloat("Speed", Mathf.Abs(moveZ));
+        else if (Mathf.Abs(moveX) > 0.1f)
+        {
+            animator.SetFloat("Speed", Mathf.Abs(moveX));
+        }
+        else
+        {
+            animator.SetFloat("Speed", 0f);
         }
     }
 }

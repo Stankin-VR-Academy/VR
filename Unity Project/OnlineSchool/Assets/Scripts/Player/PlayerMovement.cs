@@ -6,10 +6,13 @@ public class PlayerMovement : MonoBehaviour
     public float lookSpeed = 2f;
     public float gravity = -9.81f;
 
+    public GameObject visualModel;
+
     private Animator animator;
     private CharacterController controller;
     private float rotationX = 0f;
     private Vector3 velocity;
+
 
     void Start()
     {
@@ -46,11 +49,23 @@ public class PlayerMovement : MonoBehaviour
 
             Camera.main.transform.localRotation = Quaternion.Euler(rotationX, 0f, 0f);
             transform.Rotate(Vector3.up * mouseX);
+
         }
 
         // Анимация (всегда)
         float speedValue = Mathf.Abs(moveX) + Mathf.Abs(moveZ);
         speedValue = Mathf.Clamp(speedValue, 0f, 1f);
         animator.SetFloat("Speed", speedValue);
+
+        if (visualModel != null)
+        {
+            // Делаем модель невидимой для этой камеры
+            foreach (var rend in visualModel.GetComponentsInChildren<Renderer>())
+            {
+                rend.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+                rend.enabled = false;   // тело не видно себе
+            }
+        }
     }
+
 }

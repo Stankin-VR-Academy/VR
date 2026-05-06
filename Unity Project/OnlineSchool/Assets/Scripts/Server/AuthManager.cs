@@ -12,10 +12,9 @@ public class AuthManager : MonoBehaviour
     public GameObject loginPanel;
     public GameObject registerPanel;
     public GameObject roomsPanel;
-    public GameObject InterfacePanel;
 
     // Кнопки главного меню
-    public Button toAuthButton;   
+    public Button toAuthButton;
     public Button exitButton;
 
     // Поля логина
@@ -36,7 +35,7 @@ public class AuthManager : MonoBehaviour
     public Transform roomsContainer;
     public GameObject roomButtonPrefab;
 
-    // Кнопка создания
+    // Кнопка создания комнаты
     public Button createRoomButton;
 
     // Панель создания комнаты
@@ -44,8 +43,9 @@ public class AuthManager : MonoBehaviour
     public TMP_InputField newRoomNameInput;
     public Button confirmCreateRoomButton;
     public Button cancelCreateRoomButton;
-    public Button cancelLogin;
+    public Button cancelLoginButton; // ← исправлено название
 
+    // Панель сообщений
     public GameObject messagePanel;
     public TMP_Text messageText;
 
@@ -53,7 +53,7 @@ public class AuthManager : MonoBehaviour
     {
         // Кнопки главного меню
         if (toAuthButton != null)
-            toAuthButton.onClick.AddListener(ShowRegisterPanel); // Вход → регистрация
+            toAuthButton.onClick.AddListener(ShowRegisterPanel);
         if (exitButton != null)
             exitButton.onClick.AddListener(ExitApplication);
 
@@ -66,17 +66,25 @@ public class AuthManager : MonoBehaviour
         createRoomButton.onClick.AddListener(() => createRoomPanel.SetActive(true));
         confirmCreateRoomButton.onClick.AddListener(OnConfirmCreateRoom);
         cancelCreateRoomButton.onClick.AddListener(() => createRoomPanel.SetActive(false));
-        cancelLogin.onClick.AddListener(() => {
-            loginPanel.SetActive(false);
-            mainMenuPanel.SetActive(true);
-        });
 
-        // Начальное состояние: видно только главное меню
+        // Кнопка "Назад" на панели логина
+        if (cancelLoginButton != null)
+            cancelLoginButton.onClick.AddListener(() =>
+            {
+                loginPanel.SetActive(false);
+                mainMenuPanel.SetActive(true);
+            });
+
+        // Начальное состояние
         mainMenuPanel.SetActive(true);
         loginPanel.SetActive(false);
         registerPanel.SetActive(false);
         roomsPanel.SetActive(false);
         createRoomPanel.SetActive(false);
+
+        // Скрываем панель сообщений
+        if (messagePanel != null)
+            messagePanel.SetActive(false);
     }
 
     void ShowRegisterPanel()
@@ -103,29 +111,12 @@ public class AuthManager : MonoBehaviour
         roomsPanel.SetActive(true);
     }
 
-    public void ShowMessage(string message, float duration = 3f)
-    {
-        if (messagePanel == null || messageText == null) return;
-
-        messageText.text = message;
-        messagePanel.SetActive(true);
-
-        CancelInvoke(nameof(HideMessage));
-        Invoke(nameof(HideMessage), duration);
-    }
-
-    private void HideMessage()
-    {
-        if (messagePanel != null)
-            messagePanel.SetActive(false);
-    }
-
     void ExitApplication()
     {
 #if UNITY_EDITOR
         UnityEditor.EditorApplication.isPlaying = false;
 #else
-            Application.Quit();
+        Application.Quit();
 #endif
     }
 
@@ -150,16 +141,13 @@ public class AuthManager : MonoBehaviour
         {
             LoginResponse loginResponse = JsonUtility.FromJson<LoginResponse>(response);
             api.SetToken(loginResponse.access_token);
-            Debug.Log("Успешный вход!");
 
-            loginPanel.SetActive(false);
-            registerPanel.SetActive(false);
-            roomsPanel.SetActive(true);
-
+            ShowRoomsPanel();
             GetRooms();
         }
         else
         {
+            // Вместо Debug.LogError показываем сообщение пользователю
             ShowMessage("Ошибка входа: неверный email или пароль", 3f);
         }
     }
@@ -175,13 +163,13 @@ public class AuthManager : MonoBehaviour
         if (string.IsNullOrEmpty(email) || string.IsNullOrEmpty(username) ||
             string.IsNullOrEmpty(fullName) || string.IsNullOrEmpty(password))
         {
-            ShowMessage("Заполните все поля!", 3f);
+            ShowMessage("Заполните все поля!", 2f);
             return;
         }
 
         if (password != confirm)
         {
-            Debug.LogError("Пароли не совпадают!");
+            ShowMessage("Пароли не совпадают!", 2f);
             return;
         }
 
@@ -203,11 +191,11 @@ public class AuthManager : MonoBehaviour
 
     void OnRegisterResponse(bool success, string response)
     {
-        if(success)
-    {
+        if (success)
+        {
             ShowLoginPanel();
         }
-    else
+        else
         {
             ShowMessage("Ошибка регистрации: проверьте введённые данные", 3f);
         }
@@ -224,12 +212,11 @@ public class AuthManager : MonoBehaviour
         {
             RoomsList rooms = JsonUtility.FromJson<RoomsList>("{\"rooms\":" + response + "}");
             Debug.Log($"Получено комнат: {rooms.rooms.Length}");
-
             DisplayRooms(rooms.rooms);
         }
         else
         {
-            Debug.LogError("Ошибка получения комнат: " + response);
+            ShowMessage("Ошибка получения комнат", 2f);
         }
     }
 
@@ -251,17 +238,18 @@ public class AuthManager : MonoBehaviour
     {
         Debug.Log($"Присоединяюсь к комнате {roomId}");
 
-        // Останавливаем музыку главного меню
-        AudioSource menuMusic = InterfacePanel.GetComponent<AudioSource>();
-        if (menuMusic != null)
-            menuMusic.Stop();
+        // Останавливаем музыку главного меню (если есть)
+        if (mainMenuPanel != null)
+        {
+            AudioSource menuMusic = mainMenuPanel.GetComponent<AudioSource>();
+            if (menuMusic != null)
+                menuMusic.Stop();
+        }
 
-        // Сохраняем ID комнаты и токен
         PlayerPrefs.SetString("SelectedRoomId", roomId);
         PlayerPrefs.SetString("AccessToken", api.GetToken());
         PlayerPrefs.Save();
 
-        // Загружаем сцену с классом
         SceneManager.LoadScene("Classroom");
     }
 
@@ -279,7 +267,6 @@ public class AuthManager : MonoBehaviour
     void CreateRoom(string roomName)
     {
         var request = new CreateRoomRequest { name = roomName };
-
         StartCoroutine(api.Post("/rooms", request, (success, response) =>
         {
             if (success)
@@ -290,8 +277,27 @@ public class AuthManager : MonoBehaviour
             }
             else
             {
-                ShowMessage("Ошибка создания комнаты", 2f);
+                ShowMessage("Ошибка создания комнаты!", 2f);
             }
         }));
     }
+
+
+    public void ShowMessage(string message, float duration = 3f)
+    {
+        if (messagePanel == null || messageText == null) return;
+
+        messageText.text = message;
+        messagePanel.SetActive(true);
+
+        CancelInvoke(nameof(HideMessage));
+        Invoke(nameof(HideMessage), duration);
+    }
+
+    private void HideMessage()
+    {
+        if (messagePanel != null)
+            messagePanel.SetActive(false);
+    }
 }
+

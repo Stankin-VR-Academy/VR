@@ -66,3 +66,26 @@ public class Rotation
     public float y;
     public float z;
 }
+
+[System.Serializable]
+public class ApiErrorResponse
+{
+    public ErrorDetail[] detail;
+}
+
+[System.Serializable]
+public class ErrorDetail
+{
+    public string type;
+    public string[] loc;
+    public string msg;
+    public string input;
+    public ErrorContext ctx;
+}
+
+[System.Serializable]
+public class ErrorContext
+{
+    public int min_length;
+    public string error;
+}

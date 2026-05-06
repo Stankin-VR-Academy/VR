@@ -7,7 +7,7 @@ EditorBuildSettings:
   m_Scenes:
   - enabled: 1
     path: Assets/Scenes/Auth.unity
-    guid: d4b66b750198f0243a1817a269015aab
+    guid: 4ce9999c58f52d04d93e660cbcdfb707
   - enabled: 1
     path: Assets/Scenes/Classroom.unity
     guid: 99c9720ab356a0642a771bea13969a05

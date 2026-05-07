@@ -92,6 +92,12 @@ public class RoomManager : MonoBehaviour
             case "leave":
                 HandlePlayerLeave(msg);
                 break;
+            case "object_spawned":
+            case "object_transformed":
+            case "object_destroyed":   
+                if (ObjectManager.Instance != null)
+                    ObjectManager.Instance.OnWebSocketMessage(message);
+                break;
             default:
                 Debug.Log($"Неизвестный тип: {msg.type}");
                 break;

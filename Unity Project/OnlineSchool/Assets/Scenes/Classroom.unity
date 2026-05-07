@@ -344,6 +344,7 @@ GameObject:
   m_Component:
   - component: {fileID: 321262328}
   - component: {fileID: 321262327}
+  - component: {fileID: 321262329}
   m_Layer: 0
   m_Name: RoomManager
   m_TagString: Untagged
@@ -381,6 +382,27 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &321262329
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 321262326}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: cc77344487e2976469e0f169fa3fad6b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ObjectManager
+  webSocketClient: {fileID: 1601324136}
+  objectPrefabs:
+  - {fileID: 965397103319330347, guid: 1baa7dc5821c0484497f454df221d1ea, type: 3}
+  - {fileID: 4183615485776370226, guid: b730346e463b43f4ab2f0ac37abd08ff, type: 3}
+  - {fileID: 5390862265449755039, guid: 0e0c4bb30fd0c9f46947063f4c934cef, type: 3}
+  objectPrefabNames:
+  - Cube
+  - Sphere
+  - Cylinder
 --- !u!65 &685267016
 BoxCollider:
   m_ObjectHideFlags: 0

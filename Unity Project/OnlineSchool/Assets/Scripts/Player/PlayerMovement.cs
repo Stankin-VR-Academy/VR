@@ -6,6 +6,8 @@ public class PlayerMovement : MonoBehaviour
     public float lookSpeed = 2f;
     public float gravity = -9.81f;
 
+    private bool isControlEnabled = true;
+
     public GameObject visualModel;
 
     private Animator animator;
@@ -24,6 +26,8 @@ public class PlayerMovement : MonoBehaviour
 
     void Update()
     {
+        if (!isControlEnabled) return;
+
         float moveX = Input.GetAxis("Horizontal");
         float moveZ = Input.GetAxis("Vertical");
 
@@ -65,6 +69,18 @@ public class PlayerMovement : MonoBehaviour
                 rend.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
                 rend.enabled = false;   // тело не видно себе
             }
+        }
+    }
+
+    public void SetControlEnabled(bool enabled)
+    {
+        isControlEnabled = enabled;
+
+        if (!enabled)
+        {
+            // Сбрасываем скорость анимации
+            if (animator != null)
+                animator.SetFloat("Speed", 0);
         }
     }
 

@@ -142,12 +142,16 @@ public class RoomManager : MonoBehaviour
     {
         if (msg.user_id == myUserId) return;
 
+
         if (!remotePlayers.ContainsKey(msg.user_id))
         {
             Debug.Log($"Создаём игрока: {msg.user_name ?? msg.username ?? "без имени"} ({msg.user_id})");
 
             GameObject newPlayer = Instantiate(playerPrefab, Vector3.zero, Quaternion.identity);
             newPlayer.GetComponent<PlayerMovement>().enabled = false;
+
+            if (newPlayer.GetComponent<RemotePositionSmoother>() == null)
+                newPlayer.AddComponent<RemotePositionSmoother>();
 
             remotePlayers[msg.user_id] = newPlayer;
 
@@ -172,19 +176,31 @@ public class RoomManager : MonoBehaviour
     {
         if (msg.user_id == myUserId) return;
 
-        if (!remotePlayers.ContainsKey(msg.user_id))
-        {
-            // Если игрока ещё нет, создаём (на случай, если join не пришёл)
-            HandlePlayerJoin(msg);
-            return;
-        }
-
         if (remotePlayers.TryGetValue(msg.user_id, out GameObject player))
         {
-            if (msg.position != null)
-                player.transform.position = new Vector3(msg.position.x, msg.position.y, msg.position.z);
-            if (msg.rotation != null)
-                player.transform.rotation = Quaternion.Euler(msg.rotation.x, msg.rotation.y, msg.rotation.z);
+            Vector3 newPos = new Vector3(msg.position.x, msg.position.y, msg.position.z);
+            Quaternion newRot = Quaternion.Euler(msg.rotation.x, msg.rotation.y, msg.rotation.z);
+
+            Animator anim = player.GetComponent<Animator>();
+            if (anim != null)
+            {
+                float distance = Vector3.Distance(player.transform.position, newPos);
+                float timeBetweenUpdates = 0.05f;
+                float speed = distance / timeBetweenUpdates;
+                float normalizedSpeed = Mathf.Clamp01(speed / 3f);
+                anim.SetFloat("Speed", normalizedSpeed);
+            }
+
+            RemotePositionSmoother smoother = player.GetComponent<RemotePositionSmoother>();
+            if (smoother != null)
+            {
+                smoother.SetTarget(newPos, newRot);
+            }
+            else
+            {
+                player.transform.position = newPos;
+                player.transform.rotation = newRot;
+            }
         }
     }
 
